@@ -1,0 +1,144 @@
+<div class="order-detail-container">
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Carregando pedido...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="error-message">
+    <span class="error-icon">⚠️</span>
+    <p>{{ error }}</p>
+    <button class="btn btn-secondary" (click)="loadOrder()">Tentar Novamente</button>
+    <button class="btn btn-outline" (click)="goBack()">Voltar</button>
+  </div>
+
+  <!-- Order Detail -->
+  <div *ngIf="order && !loading" class="order-detail">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <button class="btn btn-outline btn-back" (click)="goBack()">← Voltar</button>
+        <h1>Pedido #{{ order.id }}</h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="openStatusModal()">Alterar Status</button>
+        <button class="btn btn-primary" (click)="editOrder()">Editar</button>
+        <button class="btn btn-danger" (click)="openDeleteModal()">Excluir</button>
+      </div>
+    </div>
+
+    <!-- Order Info Card -->
+    <div class="info-card">
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Status</label>
+          <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+            {{ order.status }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Data do Pedido</label>
+          <span>{{ formatDate(order.orderDate) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Cliente ID</label>
+          <span class="small-text">{{ order.customerId }}</span>
+        </div>
+        <div class="info-item">
+          <label>Total</label>
+          <span class="total-amount">{{ formatCurrency(order.totalAmount) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="items-card" *ngIf="order.items && order.items.length > 0">
+      <h2>Itens do Pedido</h2>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>ID Item</th>
+            <th>Produto</th>
+            <th>Quantidade</th>
+            <th>Preço Unitário</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of order.items">
+            <td>{{ item.id.substring(0, 8) }}...</td>
+            <td><strong>{{ item.productName }}</strong></td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ formatCurrency(item.unitPrice) }}</td>
+            <td><strong>{{ formatCurrency(item.totalPrice) }}</strong></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="4" class="text-right"><strong>Total do Pedido</strong></td>
+            <td><strong class="total-amount">{{ formatCurrency(order.totalAmount) }}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- No items warning -->
+    <div class="items-card" *ngIf="!order.items || order.items.length === 0">
+      <p class="warning-text">Nenhum item disponível para este pedido.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal" *ngIf="showStatusModal" (click)="closeStatusModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Alterar Status do Pedido</h2>
+      <button class="close-btn" (click)="closeStatusModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="statusError" class="error-banner">{{ statusError }}</div>
+      
+      <div class="form-group">
+        <label for="statusSelect">Novo Status</label>
+        <select id="statusSelect" [(ngModel)]="newStatus" class="form-control">
+          <option *ngFor="let status of availableStatuses" [value]="status">{{ status }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closeStatusModal()" [disabled]="updatingStatus">
+        Cancelar
+      </button>
+      <button class="btn btn-primary" (click)="updateStatus()" [disabled]="updatingStatus">
+        {{ updatingStatus ? 'Atualizando...' : 'Atualizar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Confirmar Exclusão</h2>
+      <button class="close-btn" (click)="closeDeleteModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="deleteError" class="error-banner">{{ deleteError }}</div>
+      
+      <p>Tem certeza que deseja excluir o pedido #{{ orderId }}?</p>
+      <p class="warning-text">Esta ação não pode ser desfeita.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closeDeleteModal()" [disabled]="deleting">
+        Cancelar
+      </button>
+      <button class="btn btn-danger" (click)="deleteOrder()" [disabled]="deleting">
+        {{ deleting ? 'Excluindo...' : 'Excluir' }}
+      </button>
+    </div>
+  </div>
+</div>
+

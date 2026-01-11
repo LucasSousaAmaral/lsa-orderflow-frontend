@@ -1,0 +1,112 @@
+<div class="order-list-container">
+  <div class="header">
+    <h1>Pedidos</h1>
+    <button class="btn btn-primary" (click)="createOrder()">
+      <span class="icon">+</span> Novo Pedido
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <h3>Buscar Pedidos</h3>
+    <div class="filters">
+      <div class="filter-group search-group">
+        <label for="searchText">Buscar</label>
+        <input 
+          type="text" 
+          id="searchText" 
+          [(ngModel)]="searchText" 
+          (keyup.enter)="applyFilters()"
+          placeholder="Buscar por ID, cliente, status..."
+          class="form-control">
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-secondary" (click)="applyFilters()">Buscar</button>
+        <button class="btn btn-outline" (click)="clearFilters()">Limpar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Carregando pedidos...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="error-message">
+    <span class="error-icon">⚠️</span>
+    <p>{{ error }}</p>
+    <button class="btn btn-secondary" (click)="loadOrders()">Tentar Novamente</button>
+  </div>
+
+  <!-- Orders Table -->
+  <div *ngIf="!loading && !error" class="orders-content">
+    <div *ngIf="orders.length === 0" class="empty-state">
+      <p>Nenhum pedido encontrado</p>
+      <button class="btn btn-primary" (click)="createOrder()">Criar Primeiro Pedido</button>
+    </div>
+
+    <div *ngIf="orders.length > 0" class="orders-table-container">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Data</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of orders" class="order-row" (click)="viewOrder(order.id)">
+            <td><strong>{{ order.id.substring(0, 8) }}...</strong></td>
+            <td>{{ formatDate(order.orderDate) }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                {{ order.status }}
+              </span>
+            </td>
+            <td><strong>{{ formatCurrency(order.totalAmount) }}</strong></td>
+            <td>
+              <button class="btn btn-small btn-outline" (click)="viewOrder(order.id); $event.stopPropagation()">
+                Ver Detalhes
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button 
+          class="btn btn-outline btn-small" 
+          [disabled]="currentPage === 1"
+          (click)="goToPage(currentPage - 1)">
+          Anterior
+        </button>
+
+        <button 
+          *ngFor="let page of pages"
+          class="btn btn-small"
+          [ngClass]="{'btn-primary': page === currentPage, 'btn-outline': page !== currentPage}"
+          (click)="goToPage(page)">
+          {{ page }}
+        </button>
+
+        <button 
+          class="btn btn-outline btn-small" 
+          [disabled]="currentPage === totalPages"
+          (click)="goToPage(currentPage + 1)">
+          Próxima
+        </button>
+      </div>
+
+      <div class="pagination-info">
+        Mostrando {{ orders.length }} de {{ totalCount }} pedidos
+      </div>
+    </div>
+  </div>
+</div>
+
